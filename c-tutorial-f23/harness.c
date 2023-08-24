@@ -9,12 +9,12 @@ void display(void *str){
 
 //[Exercise 1] display input one word per line, skipping empty lines
 void echo(FILE *file){
-    char line[41]; //Each string no more than 40 char + newline, account for buffer overflow
+    char line[41]; //each string no more than 40 char + newline, account for buffer overflow
     int empty = 1;
-    while(fgets(line, sizeof(line), file)){ //Read until EOF
-        char *tok = strtok(line, " \t\n\r");
+    while(fgets(line, sizeof(line), file)){ //read until EOF
+        char *tok = strtok(line, " \t\n\r"); //use tokens to skip over empty lines
         while(tok != NULL){
-            empty = 0; // File is not empty if something is read
+            empty = 0; // file is not empty if something is read
             printf("%s\n", line);
             tok = strtok(NULL, " \t\n\r");
         }
@@ -37,8 +37,9 @@ void tail(FILE *file){
     list_visit_items(&list, display); //print list
 }
 
+// [Exercise 5] insert input into list, remove three items from head, & print
 void tail_remove(FILE *file){
-
+//TODO
 }
 
 int main(int argc, char const *argv[]){

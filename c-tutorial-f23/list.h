@@ -27,6 +27,9 @@ void list_visit_items(list_t *l, void (*visitor)(void *v));
 //[Exercise 4] declare list_insert_tail
 void list_insert_tail(list_t *l, void *v);
 
+//[Exercise 5] declare list_remove_head
+void list_remove_head(list_t *l);
+
 
 
 #endif

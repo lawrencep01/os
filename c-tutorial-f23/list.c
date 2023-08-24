@@ -19,28 +19,24 @@ void list_visit_items(list_t *l, void (*visitor)(void *v)){
 
 //[Exercise 4] insert item @ list tail
 void list_insert_tail(list_t *l, void *v){
-    list_item_t *item = (list_item_t *)malloc(sizeof(list_item_t));
+    list_item_t *item = (list_item_t *)malloc(sizeof(list_item_t)); //allocate memory on heap
     item->datum = v;
     item->next = NULL; 
 
     //empty list edge case
     if(l->tail == NULL){
         item->pred = NULL;
-        l->head = item;
+        l->head = item; //head and tail are the new item
         l->tail = item;
     }
     else{
         item->pred = l->tail;
         l->tail->next = item;
     }
-    l->tail = item; //new item now tail of list
+    l->tail = item; //set l tail to item
 }
 
 //[Exercise 5] remove item from list head
 void list_remove_head(list_t *l){
-    list_item_t *tmp = l->head;
-    l->head = l->head->next;
-    l->head->pred = tmp;
-    l->datum_delete(tmp->datum);
-    free(tmp);
+    //TODO
 }
