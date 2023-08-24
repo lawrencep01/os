@@ -1,6 +1,5 @@
 does
-this
-program
+echo
 skip
 
 
@@ -9,3 +8,8 @@ skip
 empty
 
 lines?
+
+while
+
+tail
+doesnt?
