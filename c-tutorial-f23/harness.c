@@ -52,7 +52,7 @@ void tail_remove(FILE *file){
             list = *list_remove_head(&list);
         }
         list_visit_items(&list, display);
-        printf("---------------------------\n");
+        printf("\n---------------------------\n");
     }
 }
 

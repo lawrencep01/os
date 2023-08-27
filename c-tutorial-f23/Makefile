@@ -2,7 +2,8 @@ CXX = gcc
 
 OBJECTS = harness.o list.o
 
-a.out: $(OBJECTS)
-		$(CXX)
+list_harness: $(OBJECTS) 
+		$(CXX) $(OBJECTS) -o list_harness
 
-clean: -rm -f *.o *~
+clean: 
+		-rm -f *.o *~
