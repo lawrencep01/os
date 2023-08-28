@@ -3,7 +3,7 @@
 #include "list.h"
 
 //[Exercise 3] visitor function for list_visit_items
-void display(void *str){
+void display(void *str){ 
     printf("%s", (char *)str);
 }
 
@@ -12,11 +12,9 @@ void echo(FILE *file){
     char line[41]; //each string no more than 40 char + newline, account for buffer overflow
     int empty = 1;
     while(fgets(line, sizeof(line), file)){ //read until EOF
-        char *tok = strtok(line, " \t\n\r"); //use tokens to skip over empty lines
-        while(tok != NULL){
-            empty = 0; // file is not empty if something is read
-            printf("%s\n", line);
-            tok = strtok(NULL, " \t\n\r");
+        if (line[0] != '\n'){
+            empty = 0;
+            printf(line);
         }
     }
     if(empty){
@@ -40,6 +38,22 @@ void tail(FILE *file){
 // [Exercise 5] insert input into list, remove three items from head, & print
 void tail_remove(FILE *file){
 //TODO
+    char line[41];
+    list_t list;
+    int count = 0;
+    list_init(&list, NULL, free); //'NULL' compare & 'free' datum_delete
+    while(fgets(line, sizeof(line), file)){
+        char *inserted_line = strdup(line); //allocate memory & duplicate 
+        list_insert_tail(&list, inserted_line);
+    }
+
+    while (!list_empty(&list)){
+        for (int i = 0; i<3; i++){
+            list = *list_remove_head(&list);
+        }
+        list_visit_items(&list, display);
+        printf("\n---------------------------\n");
+    }
 }
 
 int main(int argc, char const *argv[]){
@@ -54,7 +68,7 @@ int main(int argc, char const *argv[]){
         tail_remove(file);
     }
     else{
-        printf("Invalid");
+        printf("Invalid input");
     }
     fclose(file);
     return 0;

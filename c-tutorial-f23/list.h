@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
 //[Exercise 2] define list_item struct (from c-tutorial-f23)
 typedef struct list_item {
@@ -28,8 +29,10 @@ void list_visit_items(list_t *l, void (*visitor)(void *v));
 void list_insert_tail(list_t *l, void *v);
 
 //[Exercise 5] declare list_remove_head
-void list_remove_head(list_t *l);
+list_t* list_remove_head(list_t *l);
 
+//helper function to determine emptiness
+bool list_empty(list_t *l);
 
 
 #endif
