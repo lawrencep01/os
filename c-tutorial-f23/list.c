@@ -16,11 +16,9 @@ void list_init(list_t *l, int (*compare)(const void *key, const void *with), voi
 
 //[Exercise 3] visit list items
 void list_visit_items(list_t *l, void (*visitor)(void *v)){
-    list_item_t *curr = l->head; //start @ head
-    while (curr) { //iterate over each item
-        if (curr != l->head && curr != l->tail){
-            visitor(curr->datum);  //call visitor function on current item
-        }
+    list_item_t *curr = l->head->next; //start @ head
+    while (curr != l->tail) { //iterate over each item
+        visitor(curr->datum);  //call visitor function on current item
         curr = curr->next; //move to the next item
     }
 }
