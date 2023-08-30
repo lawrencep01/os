@@ -1,0 +1,2 @@
+Alexandros Pfoser, ap4gf, wrote makefile, tail-remove methods, and list_insert_tail
+Lawrence Phan, lvp2dun, wrote list.h, echo, tail, list_init, list_visit_items 
