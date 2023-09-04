@@ -6,6 +6,8 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <errno.h>
+#include <cstring>
+#include <fcntl.h> 
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -21,27 +23,6 @@ std::string right_trim(const std::string &s){
 
 std::string trim(const std::string &s) {
     return right_trim(left_trim(s));
-}
-
-void exec_command(char **args, std::string input, std::string output){
-
-    pid_t pid;
-    int status;
-
-    pid = fork();
-    if (pid == 0){
-        //setup redirection here (child before exec)
-        int r = execvp(args[0], args);
-        if (r < 0) {
-            std::cout << "fuck, error" << std::endl;
-            perror("Failed");
-        }
-    } else if (pid > 0) {
-        wait(&status);
-    } else {
-        std::cout << "Error forking" << std::endl;
-    }
-    return;
 }
 
 void process_command(const std::string &s){
@@ -90,29 +71,57 @@ void process_command(const std::string &s){
     }
 
     if (flag == true || num_words == 0 || input == ">" || input == "<" || output == ">" || output == "<"){
-        std::cout << "Invalid command" << std::endl;
+        std::cerr << "Invalid command" << std::endl;
         return;
     }
 
     // getting ready for exec
-    std::vector<char*> cleaned_words;
-    for (auto s: words){
-        if (s != "<" && s != ">"){ cleaned_words.push_back(const_cast<char*>(s.c_str())); }
+    const char **args = new const char* [words.size()+2];
+    i = 0;
+    for (unsigned int j = 0; j < words.size(); j++){
+        if (words[j] != "<" && words[j] != ">" && words[j] != input && words[j] != output){ 
+            args[i] = words[j].c_str();
+            i++;
+        }
     }
-    cleaned_words.push_back(NULL);
+    args[i] = NULL;
+    pid_t pid;
+    int status;
 
-    exec_command(&cleaned_words[0], input, output);
-    // clean it up (done)
-    // setup redirection (almost done)
-    // figure out error handling (read more I suppose)
+    pid = fork();
+    if (pid == 0){
+        //setup redirection here (child before exec)
+        if (input != ""){
+            close(0);
+            if (open(input.c_str(), O_RDONLY) < 0) {
+                perror("Failed: ");
+                exit(255);
+            }
+        }
+        if (output != ""){
+            close(1);
+            open(output.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        }
+        int r = execv(args[0], (char **)args);
+        if (r < 0) {
+            perror("Failed: ");
+            exit(255);
+        }
+        exit(0);
+    } else if (pid > 0) {
+        wait(&status);
+        int es = WEXITSTATUS(status);
+        std::cout << args[0] << " exit status: " << es << std::endl;
+    } else {
+        std::cerr << "Error while forking" << std::endl;
+    }
+
+    delete[](args);
+    return;
 
 }
 
 void parse_and_run_command(const std::string &command) {
-    /* TODO: Implement this. */
-    /* Note that this is not the correct way to test for the exit command.
-       For example the command "   exit  " should also exit your shell.
-     */
 
     // trim up leading and trailing whitespaces
     std::string new_command = trim(command);
