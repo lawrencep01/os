@@ -7,7 +7,8 @@
 #include <sys/wait.h>
 #include <errno.h>
 #include <cstring>
-#include <fcntl.h> 
+#include <fcntl.h>
+
 
 const std::string WHITESPACE = " \n\r\t\f\v";
 
@@ -70,6 +71,7 @@ void process_command(const std::string &s){
         i ++;
     }
 
+    //std::cout << flag << num_words << input << output << std::endl;
     if (flag == true || num_words == 0 || input == ">" || input == "<" || output == ">" || output == "<"){
         std::cerr << "Invalid command" << std::endl;
         return;
@@ -94,20 +96,22 @@ void process_command(const std::string &s){
         if (input != ""){
             close(0);
             if (open(input.c_str(), O_RDONLY) < 0) {
-                perror("Failed: ");
+                perror("Failed on <");
                 exit(255);
             }
         }
         if (output != ""){
             close(1);
-            open(output.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
+            if (open(output.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644) < 0){
+                perror("Failed on >");
+                exit(255);
+            }
         }
         int r = execv(args[0], (char **)args);
         if (r < 0) {
-            perror("Failed: ");
+            perror("Failed");
             exit(255);
         }
-        exit(0);
     } else if (pid > 0) {
         wait(&status);
         int es = WEXITSTATUS(status);

@@ -1,0 +1,2 @@
+Alexandros Pfoser, ap4gf, command processing and validation
+Lawrence Phan, lvp2dun, fork(), exec() and file descriptor code
