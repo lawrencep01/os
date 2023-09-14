@@ -26,7 +26,7 @@ std::string trim(const std::string &s) {
     return right_trim(left_trim(s));
 }
 
-void process_command(const std::string &s){
+std::vector<std::string> validate_command(const std::string &s){
 
     std::vector<std::string> words;
     // split by delimiters
@@ -73,13 +73,31 @@ void process_command(const std::string &s){
 
     //std::cout << flag << num_words << input << output << std::endl;
     if (flag == true || num_words == 0 || input == ">" || input == "<" || output == ">" || output == "<"){
+        words.clear();
+        return words;
+        
+    }
+    words.push_back(input);
+    words.push_back(output);
+    return words;
+}
+
+void process_command(const std::string &s){
+
+    std::vector<std::string> words = validate_command(s);
+
+    if (words.size() == 0){
         std::cerr << "Invalid command" << std::endl;
         return;
     }
+    std::string output = words.back();
+    words.pop_back();
+    std::string input = words.back();
+    words.pop_back();
 
     // getting ready for exec
     const char **args = new const char* [words.size()+2];
-    i = 0;
+    int i = 0;
     for (unsigned int j = 0; j < words.size(); j++){
         if (words[j] != "<" && words[j] != ">" && words[j] != input && words[j] != output){ 
             args[i] = words[j].c_str();
@@ -125,6 +143,122 @@ void process_command(const std::string &s){
 
 }
 
+void process_pipe(std::string &s){
+    std::string delim = " | ";
+    size_t pos = 0;
+    std::vector<std::string> commands;
+    std::string command;
+
+    if (s.back() == '|'){
+        std::cerr << "Invalid command" << std::endl;
+        return;
+    }
+
+    while ((pos = s.find(delim)) != std::string::npos){
+        command = trim(s.substr(0, pos));
+        s.erase(0, pos + delim.length());
+        commands.push_back(command);
+    }
+    commands.push_back(trim(s));
+
+    std::vector<std::vector<std::string>> validated;
+    std::vector<std::string> words;
+    for (auto s: commands){
+        words = validate_command(s);
+        if (words.size() == 0){
+            std::cerr << "Invalid command in pipeline" << std::endl;
+            return;
+        }
+        validated.push_back(words);
+    }
+
+    int prev[2];
+    int fd[2];
+    for (unsigned int i = 0; i < validated.size(); i++){
+        words = validated[i];
+        std::string output = words.back();
+        words.pop_back();
+        std::string input = words.back();
+        words.pop_back();
+
+        // getting ready for exec
+        const char **args = new const char* [words.size()+2];
+        int k = 0;
+        for (unsigned int j = 0; j < words.size(); j++){
+            if (words[j] != "<" && words[j] != ">" && words[j] != input && words[j] != output && words[j] != "|"){ 
+                args[k] = words[j].c_str();
+                k++;
+            }
+        }
+        args[k] = NULL;
+
+        if (i != validated.size() - 1){
+            if (pipe2(fd, 0) < 0){
+                perror("Failed");
+            }
+        }
+
+        //max out the pipe size
+        fcntl(fd[0], F_SETPIPE_SZ, 1048576);
+        fcntl(fd[1], F_SETPIPE_SZ, 1048576);
+
+        int status;
+        pid_t pid = fork();
+        if (pid == 0){
+            if (i != 0){
+                dup2(prev[0], 0);
+                close(prev[0]);
+                close(prev[1]);
+            }
+            if (i != validated.size() - 1){
+                close(fd[0]);
+                dup2(fd[1], 1);
+                close(fd[1]);
+            }
+            if (input != ""){
+                close(0);
+                if (open(input.c_str(), O_RDONLY) < 0) {
+                    perror("Failed on <");
+                    exit(255);
+                }
+            }
+            if (output != ""){
+                close(1);
+                if (open(output.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644) < 0){
+                    perror("Failed on >");
+                    exit(255);
+                }
+            }
+            int r = execv(args[0], (char **)args);
+            if (r < 0) {
+                perror("Failed");
+                exit(255);
+            }
+
+        } else if (pid > 0) {
+            if (i != 0){
+                close(prev[0]);
+                close(prev[1]);
+            }
+            if (i != validated.size() - 1){
+                prev[0] = fd[0];
+                prev[1] = fd[1];
+            }
+            wait(&status);
+            int es = WEXITSTATUS(status);
+            std::cout << args[0] << " exit status: " << es << std::endl;
+        } else {
+            std::cerr << "Error while forking" << std::endl;
+        }
+        delete[](args);
+
+    }
+    close(prev[0]);
+    close(prev[1]);
+    return;
+
+}
+
 void parse_and_run_command(const std::string &command) {
 
     // trim up leading and trailing whitespaces
@@ -133,8 +267,7 @@ void parse_and_run_command(const std::string &command) {
     if (new_command == "exit") {
         exit(0);
     } else if (new_command.find('|') != std::string::npos){
-        std::cout << "To be implemented in Part 2. Exiting" << "\n";
-        exit(0);
+        process_pipe(new_command);
     } else {
         process_command(new_command);
     }   

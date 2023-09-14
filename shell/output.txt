@@ -1,6 +1,12 @@
+g++ -Wall -Werror -pedantic -Og -g -std=c++17 -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG   -c -o main.o main.cc
+g++ -Wall -Werror -pedantic -Og -g -std=c++17 -fsanitize=address -fsanitize=undefined -D_GLIBCXX_DEBUG -o msh main.o
 python3 shell_test.py
 Sanitizer output (main process) for test fork fails:
-  ==3514439==LeakSanitizer has encountered a fatal error.
-  ==3514439==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
-  ==3514439==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
-64 tests passed and 0 tests failed.
+  ==296296==LeakSanitizer has encountered a fatal error.
+  ==296296==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+  ==296296==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+Sanitizer output (main process) for test fork fails in a pipeline:
+  ==296845==LeakSanitizer has encountered a fatal error.
+  ==296845==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+  ==296845==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+88 tests passed and 0 tests failed.
