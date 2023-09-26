@@ -9,6 +9,7 @@ OBJS = \
 	kalloc.o\
 	kbd.o\
         kshutdown.o\
+	lcg_parkmiller.o\
 	lapic.o\
 	log.o\
 	main.o\
@@ -192,6 +193,8 @@ UPROGS=\
     _shutdown\
 	_wctest\
 	_processlist\
+	_timewithtickets\
+	_lotterytest\
 
 
 fs.img: mkfs README $(UPROGS)

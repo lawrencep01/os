@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "lcg_parkmiller.h"
 
 struct {
   struct spinlock lock;
@@ -236,6 +237,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  np->times_scheduled=0;
 
   release(&ptable.lock);
 
@@ -340,41 +342,61 @@ wait(void)
 //  - swtch to start running that process
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
-void
-scheduler(void)
-{
-  struct proc *p;
-  struct cpu *c = mycpu();
-  c->proc = 0;
-  
-  for(;;){
-    // Enable interrupts on this processor.
-    sti();
 
-    // Loop over process table looking for process to run.
-    acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
+void scheduler(void) {
+    struct proc *p;
+    struct cpu *c = mycpu();
+    c->proc = 0;
+    
+    for(;;){
+        // Enable interrupts on this processor.
+        sti();
 
-      // Switch to chosen process.  It is the process's job
-      // to release ptable.lock and then reacquire it
-      // before jumping back to us.
-      c->proc = p;
-      switchuvm(p);
-      p->state = RUNNING;
+        // Loop over process table looking for process to run.
+        acquire(&ptable.lock);
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+        //VEGAS BABY
+        int total_tickets = 0;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+            if(p->state != RUNNABLE)
+                continue;
+            total_tickets += p->tickets;
+        }
 
-      // Process is done running for now.
-      // It should have changed its p->state before coming back.
-      c->proc = 0;
+        if(total_tickets == 0) { // check for zero total_tickets
+            release(&ptable.lock);
+            continue; // No runnable processes, so continue to next iteration
+        }
+
+        int winner_ticket = next_random()%total_tickets;
+        int win_count = 0;
+        for(p = ptable.proc; p < &ptable.proc[NPROC]; p++) {
+            if(p->state != RUNNABLE)
+                continue;
+            
+            win_count += p->tickets;
+
+            if(win_count < winner_ticket)
+                continue;
+            
+            c->proc = p;
+            switchuvm(p);
+            p->state = RUNNING;
+            p->times_scheduled++;
+            swtch(&(c->scheduler), p->context);
+            switchkvm();
+
+            // Process is done running for now.
+            // It should have changed its p->state before coming back.
+            c->proc = 0;
+            break;
+        }
+        release(&ptable.lock);
     }
-    release(&ptable.lock);
-
-  }
 }
+
+  
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
