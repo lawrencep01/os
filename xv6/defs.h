@@ -1,4 +1,5 @@
 #include "param.h"
+#include "processesinfo.h"
 struct buf;
 struct context;
 struct file;
@@ -10,6 +11,9 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+
+// xv6 scheduler lab
+void            getprocessesinfo_helper(struct processes_info *pinfo);
 
 // bio.c
 void            binit(void);

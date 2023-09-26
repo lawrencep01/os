@@ -26,6 +26,25 @@ pinit(void)
   initlock(&ptable.lock, "ptable");
 }
 
+void getprocessesinfo_helper(struct processes_info *pinfo){
+
+  struct proc *p;
+  // Loop through process table
+  acquire(&ptable.lock);
+  int count = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    //printf(1, "PID: %d STATE: %d\n", p->pid, p->state);
+    if (p->state == UNUSED) {continue;}
+    pinfo->pids[count] = p->pid;
+    pinfo->times_scheduled[count] = p->times_scheduled;
+    pinfo->tickets[count] = p->tickets;
+    count++;
+  }
+
+  pinfo->num_processes = count;
+  release(&ptable.lock);
+}
+
 // Must be called with interrupts disabled
 int
 cpuid() {
@@ -88,6 +107,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->tickets = 10;
+  p->times_scheduled = 0;
 
   release(&ptable.lock);
 

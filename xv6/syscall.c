@@ -108,6 +108,8 @@ extern int sys_shutdown(void);
 extern int sys_writecount(void);
 extern int sys_setwritecount(void);
 extern int writecount;
+extern int sys_settickets(void);
+extern int sys_getprocessesinfo(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -135,6 +137,8 @@ static int (*syscalls[])(void) = {
 [SYS_shutdown] sys_shutdown,
 [SYS_writecount] sys_writecount,
 [SYS_setwritecount] sys_setwritecount,
+[SYS_settickets] sys_settickets,
+[SYS_getprocessesinfo] sys_getprocessesinfo,
 };
 
 void

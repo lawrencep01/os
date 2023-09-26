@@ -8,6 +8,31 @@
 #include "proc.h"
 
 int
+sys_settickets(void){
+
+  int tickets;
+
+  if (argint(0, &tickets) < 0){
+    return -1;
+  }
+  myproc()->tickets = tickets;
+  return 0;
+}
+
+int
+sys_getprocessesinfo(void){
+
+  struct processes_info *pinfo;
+
+  if (argptr(0, (void*)&pinfo, sizeof(*pinfo)) < 0){
+    return -1;
+  }
+
+  getprocessesinfo_helper(pinfo);  
+  return 0;
+}
+
+int
 sys_fork(void)
 {
   return fork();

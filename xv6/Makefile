@@ -191,6 +191,7 @@ UPROGS=\
 	_zombie\
     _shutdown\
 	_wctest\
+	_processlist\
 
 
 fs.img: mkfs README $(UPROGS)
