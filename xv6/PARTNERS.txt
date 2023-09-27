@@ -1,2 +1,2 @@
-Alexandros Pfoser, ap4gf, testing of system calls, refinement
+Alexandros Pfoser, ap4gf, scheduling
 Lawrence Phan, lvp2dun, implemented system calls
