@@ -1,12 +1,10 @@
 #include "life.h"
 #include <pthread.h>
-#include <cstdio>
 #include <vector>
 #include <iostream>
 
 pthread_barrier_t barrier;
 pthread_barrier_t barrier2;
-
 LifeBoard next_state;
 
 struct args {
@@ -44,8 +42,6 @@ void *compute_simulation(void *arguments){
         pthread_barrier_wait(&barrier);
         if (data->id == 0){
             swap(*(data->state), *(data->next_state));
-            LifeBoard next_next_state{data->state->width(), data->state->height()};
-            swap(*(data->next_state), next_next_state);
         }
         pthread_barrier_wait(&barrier);
         
