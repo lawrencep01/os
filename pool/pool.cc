@@ -3,13 +3,9 @@
 using namespace std;
 
 Task::Task() {
-    pthread_cond_init(&done_condition, NULL);
-    pthread_mutex_init(&done_lock, NULL);
 }
 
 Task::~Task() {
-    pthread_cond_destroy(&done_condition);
-    pthread_mutex_destroy(&done_lock);
 }
 
 void ThreadPool::RunThread() {
@@ -57,10 +53,6 @@ ThreadPool::ThreadPool(int num_threads) {
     pthread_mutex_unlock(&lock);
 }
 
-// destructor, ensure all resources are cleaned up
-ThreadPool::~ThreadPool() {
-    Stop();  
-}
 
 // enqueue a specified task by "name" identifier
 void ThreadPool::SubmitTask(const std::string &name, Task* task) {
