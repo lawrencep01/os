@@ -191,7 +191,9 @@ UPROGS=\
 	_zombie\
     _shutdown\
 	_wctest\
-
+	_processlist\
+	_timewithtickets\
+	_lotterytest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

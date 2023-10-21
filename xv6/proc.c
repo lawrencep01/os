@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#define RANDOM_MAX ((1u << 31u) - 1u)
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -24,6 +26,25 @@ void
 pinit(void)
 {
   initlock(&ptable.lock, "ptable");
+}
+
+void getprocessesinfo_helper(struct processes_info *pinfo){
+
+  struct proc *p;
+  // Loop through process table
+  acquire(&ptable.lock);
+  int count = 0;
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    //printf(1, "PID: %d STATE: %d\n", p->pid, p->state);
+    if (p->state == UNUSED) {continue;}
+    pinfo->pids[count] = p->pid;
+    pinfo->times_scheduled[count] = p->times_scheduled;
+    pinfo->tickets[count] = p->tickets;
+    count++;
+  }
+
+  pinfo->num_processes = count;
+  release(&ptable.lock);
 }
 
 // Must be called with interrupts disabled
@@ -88,6 +109,8 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->tickets = 10;
+  p->times_scheduled = 0;
 
   release(&ptable.lock);
 
@@ -214,6 +237,8 @@ fork(void)
 
   acquire(&ptable.lock);
 
+  // inherit number of tickets
+  np->tickets = curproc->tickets;
   np->state = RUNNABLE;
 
   release(&ptable.lock);
@@ -311,6 +336,40 @@ wait(void)
   }
 }
 
+// Random number generation
+static unsigned random_seed = 2;
+unsigned lcg_parkmiller(unsigned *state)
+{
+    const unsigned N = 0x7fffffff;
+    const unsigned G = 48271u;
+    unsigned div = *state / (N / G);  /* max : 2,147,483,646 / 44,488 = 48,271 */
+    unsigned rem = *state % (N / G);  /* max : 2,147,483,646 % 44,488 = 44,487 */
+
+    unsigned a = rem * G;        /* max : 44,487 * 48,271 = 2,147,431,977 */
+    unsigned b = div * (N % G);  /* max : 48,271 * 3,399 = 164,073,129 */
+
+    return *state = (a > b) ? (a - b) : (a + (N - b));
+}
+
+unsigned next_random() {
+    return lcg_parkmiller(&random_seed);
+}
+
+unsigned random_at_most(unsigned max){
+    unsigned num_bins = (max + 1);
+    unsigned num_rand = RANDOM_MAX + 1;
+    unsigned bin_size = num_rand / num_bins;
+    unsigned defect = num_rand % num_bins;
+    unsigned retval;
+    unsigned x;
+
+    do {
+        x = next_random();
+    } while (num_rand - defect <= x);
+    retval = x/bin_size;
+    return retval;
+}
+
 //PAGEBREAK: 42
 // Per-CPU process scheduler.
 // Each CPU calls scheduler() after setting itself up.
@@ -332,10 +391,34 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
-    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-      if(p->state != RUNNABLE)
-        continue;
 
+    unsigned int total_tickets = 0;
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if (p->state == RUNNABLE){
+        total_tickets += p->tickets;
+      }
+    }
+
+    // Number of tickets to reach (process that reaches schedules)
+    unsigned int tickets_goal = random_at_most(total_tickets);
+
+    // Number of tickets seen so far
+    unsigned int tickets_seen = 0;
+
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE){
+        continue;
+      }
+
+      tickets_seen += p->tickets;
+      if (tickets_seen <= tickets_goal){
+        continue;
+      }
+
+      // This process is lucky (got chosen by the lottery)
+      // Increment scheduling counter
+      p->times_scheduled++;
+      
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
@@ -349,6 +432,7 @@ scheduler(void)
       // Process is done running for now.
       // It should have changed its p->state before coming back.
       c->proc = 0;
+      break;
     }
     release(&ptable.lock);
 
