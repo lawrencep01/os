@@ -1,0 +1,2 @@
+Alexandros Pfoser, ap4gf, wait for task functionality
+Lawrence Phan, lvp2dun, thread creation, stop functionality
