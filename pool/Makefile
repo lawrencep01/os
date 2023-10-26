@@ -28,7 +28,7 @@ pool-test-tsan: pool-test-tsan.o libpool-tsan.a
 SUBMIT_FILENAME=pool-submission-$(shell date +%Y%m%d%H%M%S).tar.gz
 
 submit:
-	tar -zcf $(SUBMIT_FILENAME) $(wildcard *.cc *.h *.hh *.H *.cpp *.C *.c *.md *.pdf) Makefile 
+	tar -zcf $(SUBMIT_FILENAME) $(wildcard *.cc *.h *.hh *.H *.cpp *.C *.c *.txt *.md *.pdf) Makefile 
 	@echo "Created $(SUBMIT_FILENAME); please upload and submit this file."
 
 skeleton: pool-base.h pool-base.cc
