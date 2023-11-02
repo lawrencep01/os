@@ -69,6 +69,7 @@ char*           kalloc(void);
 void            kfree(char*);
 void            kinit1(void*, void*);
 void            kinit2(void*, void*);
+int             checkfreepage(int ppn);
 
 // kbd.c
 void            kbdintr(void);
@@ -122,6 +123,7 @@ int             wait(void);
 void            wakeup(void*);
 void            yield(void);
 int             fetch(int pid, int address);
+void            getpages(int pid);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -190,7 +192,7 @@ void            switchuvm(struct proc*);
 void            switchkvm(void);
 int             copyout(pde_t*, uint, void*, uint);
 void            clearpteu(pde_t *pgdir, char *uva);
-pde_t*         walkpgdir(pde_t *pgdir, const void *va, int alloc);
+pde_t*          walkpgdir(pde_t *pgdir, const void *va, int alloc);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

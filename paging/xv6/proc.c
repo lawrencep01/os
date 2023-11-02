@@ -65,6 +65,41 @@ myproc(void) {
   return p;
 }
 
+void
+getpages(int pid){
+
+  pte_t *pte;
+  struct proc *p;
+  
+  // first find the right process
+  acquire(&ptable.lock);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    // right process
+    if(p->pid == pid) {
+      uint pages = PGROUNDUP(p->sz);
+      //cprintf("Size: %d Pages: %d\n", p->sz, pages);
+      cprintf("START PAGE TABLE (pid %d)\n", pid);
+      for (uint i = 0; i < pages; i += PGSIZE){
+        pte = walkpgdir(p->pgdir, (char *) i, 0);
+        cprintf("%x ", i >> 12);
+        cprintf("P %s %s %x %d\n",
+            *pte & PTE_U ? "U" : "-",
+            *pte & PTE_W ? "W" : "-",
+            PTE_ADDR(*pte) >> PTXSHIFT,
+            PTE_ADDR(*pte) >> PTXSHIFT
+        );
+      }
+      cprintf("END PAGE TABLE\n");
+
+      release(&ptable.lock);
+      return;
+    }  
+  }
+  release(&ptable.lock);
+  return;
+}
+
 // returns the last-level page entry for pid
 int
 fetch(int pid, int address) {
@@ -73,20 +108,20 @@ fetch(int pid, int address) {
   pte_t *pte;
   struct proc *p;
 
-  // acquiring the lock fucks me
-  // it might be because the cpu has scheduled me
-  // therefore it already has the lock when it gets to this point
-  // that is what the panic() and spinlock::acquire() methods point to
+  acquire(&ptable.lock);
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     // if matching pid then look for page entry
     if(p->pid == pid) {
+      //cprintf("Looking for page entry at VA: %x\n", u_address);
       pte = walkpgdir(p->pgdir, (char *) u_address, 0);
+      release(&ptable.lock);
       if (!pte){
         return 0;
       }
       return *pte;
     }
 
+  release(&ptable.lock);
   return 0;
 }
 

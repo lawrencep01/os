@@ -95,3 +95,32 @@ kalloc(void)
   return (char*)r;
 }
 
+// Goes through linked list of free pages
+// for now prints out the physical address
+int
+checkfreepage(int ppn){
+
+  struct run *r;
+
+  if(kmem.use_lock)
+    acquire(&kmem.lock);
+  r = kmem.freelist;
+  uint paddress;
+  int curr_ppn;
+  while (r){
+    paddress = V2P((char *) r);
+    curr_ppn = paddress >> 12;
+    if (curr_ppn == ppn){
+      //cprintf("Found PPN: %x at PA: %x at VA: %p\n", curr_ppn, V2P((char *) r), (void *) r);
+      if(kmem.use_lock)
+        release(&kmem.lock);
+      return 1;
+    }
+    r = r->next;
+  }
+  if(kmem.use_lock)
+    release(&kmem.lock);
+  return 0;
+
+}
+

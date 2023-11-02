@@ -191,6 +191,8 @@ UPROGS=\
 	_zombie\
     _shutdown\
 	_ptetool\
+	_pp_test\
+	_pp_suite\
 
 
 fs.img: mkfs README $(UPROGS)
@@ -305,7 +307,7 @@ tar:
 	cp dist/* dist/.gdbinit.tmpl /tmp/xv6
 	(cd /tmp; tar cf - xv6) | gzip >xv6-rev10-uva1.tar.gz  
 
-SUBMIT_FILENAME=xv6-submission-$(shell date +%Y%m%d%H%M%S).tar.gz
+SUBMIT_FILENAME=ap4gf.lvp2dun.paging1.tar.gz
 
 submit:
 	@tar -zcf $(SUBMIT_FILENAME) *.c *.h *.S *.ld Makefile $(wildcard *.txt) $(wildcard *.md) $(EXTRA) $(FILES)

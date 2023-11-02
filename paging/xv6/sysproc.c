@@ -7,7 +7,7 @@
 #include "mmu.h"
 #include "proc.h"
 
-int
+int 
 sys_getpagetableentry(void){
   
   int pid;
@@ -20,6 +20,28 @@ sys_getpagetableentry(void){
   }
   return fetch(pid, address);
 }
+
+int 
+sys_isphysicalpagefree(void) {
+
+  int ppn;
+
+  if (argint(0, &ppn) < 0){
+    return -1;
+  }
+  return checkfreepage(ppn);
+}
+
+int
+sys_dumppagetable(void){
+  int pid;
+  if (argint(0, &pid) < 0){
+    return -1;
+  } 
+  getpages(pid);
+  return 0;
+}
+
 int
 sys_fork(void)
 {

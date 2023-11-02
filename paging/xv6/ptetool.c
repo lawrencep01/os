@@ -72,9 +72,7 @@ int main(int argc, char **argv) {
         printf(1, "PID %d, last-level PTE for %x: ", pid, va);
         dump_pte(raw_pte);
         printf(1, "(raw value 0x%x)\n", raw_pte);
-    } 
-    /*
-    else if (0 == strcmp(argv[1], "dump")) {
+    } else if (0 == strcmp(argv[1], "dump")) {
         if (argc != 3) { usage(argv[0]); }
         int pid = atoi(argv[2]);
         dumppagetable(pid);
@@ -85,6 +83,5 @@ int main(int argc, char **argv) {
     } else {
         usage(argv[0]);
     }
-    */
     exit();
 }
