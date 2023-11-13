@@ -77,9 +77,46 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  case T_PGFLT:
+  {
+    uint fault_addr = PGROUNDDOWN(rcr2()); 
 
+    // Check if faulting address is beyond the process's allocated size
+    if (fault_addr >= myproc()->sz) {
+        cprintf("Page fault - Address %x out of bounds\n", fault_addr);
+        goto terminate;
+    }
+
+    // Retrieve the page table entry for the faulting address
+    pte_t *pte = walkpgdir(myproc()->pgdir, (const void *)fault_addr, 0);
+
+    // Check if page table entry exists and if it's a guard or non-user-accessible page
+    if (pte && ((*pte & PTE_P) && !(*pte & PTE_U))) {
+        cprintf("Page fault - Guard page or non-user-accessible page at %x\n", fault_addr);
+        goto terminate;
+    }
+
+    // Check if page needs to be allocated 
+    if (!pte || !(*pte & PTE_P)) {
+        char *mem = kalloc();
+        if (!mem) {
+            cprintf("Page fault - Out of memory at %x\n", fault_addr);
+            goto terminate;
+        }
+        memset(mem, 0, PGSIZE);
+        if (mappages(myproc()->pgdir, (void *)fault_addr, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0) {
+            cprintf("Page fault - Failed to map page for %x\n", fault_addr);
+            kfree(mem);
+            goto terminate;
+        }
+    }
+
+    switchuvm(myproc());
+    break;
+  }
   //PAGEBREAK: 13
   default:
+  terminate:
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",

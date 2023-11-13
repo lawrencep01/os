@@ -223,8 +223,9 @@ growproc(int n)
 
   sz = curproc->sz;
   if(n > 0){
-    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
-      return -1;
+    //if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+      //return -1;
+    sz+=n;
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
