@@ -78,20 +78,60 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
 
+  case T_PGFLT:
+
+    // we need to allocate a page (maybe more than one)
+    // page fault present && trying to access address within limits
+    //cprintf("PID: %d, size: %d addr: %d alloc: %d\n", myproc()->pid, myproc()->sz, rcr2(), myproc()->alloc);
+    // what if page fault is due to protection?
+    if (tf->trapno == T_PGFLT && rcr2() < PGROUNDUP(myproc()->sz) && rcr2() < KERNBASE && fetch(myproc()->pid, rcr2()) == 0){
+      char* mem;
+      uint a = PGROUNDDOWN(rcr2());
+
+      mem = kalloc();
+      if (mem == 0){
+        cprintf("On-demand allocation out of memory\n");
+        //deallocuvm(myproc()->pgdir, 0, myproc()->alloc);
+        myproc()->killed = 1;
+        break;
+      }
+      memset(mem, 0, PGSIZE);
+      if(mappages(myproc()->pgdir, (char*)a, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
+        cprintf("On-demand allocation out of memory (2)\n");
+        //deallocuvm(myproc()->pgdir, 0, myproc()->alloc);
+        kfree(mem);
+      }
+    }
+    // misbehaving process
+    // either kernel access or after end of heap
+    // In user space, assume process misbehaved.
+    else {
+      cprintf("pid %d %s: trap %d err %d on cpu %d "
+      "eip 0x%x addr 0x%x--kill proc\n",
+      myproc()->pid, myproc()->name, tf->trapno,
+      tf->err, cpuid(), tf->eip, rcr2());
+      myproc()->killed = 1;
+    }
+    break;
+
   //PAGEBREAK: 13
   default:
-    if(myproc() == 0 || (tf->cs&3) == 0){
+
+    // in kernel mode we still want to panic
+    if((myproc() == 0 || (tf->cs&3) == 0)){
       // In kernel, it must be our mistake.
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
               tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
     }
-    // In user space, assume process misbehaved.
-    cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
-            myproc()->pid, myproc()->name, tf->trapno,
-            tf->err, cpuid(), tf->eip, rcr2());
-    myproc()->killed = 1;
+
+    else {
+      cprintf("pid %d %s: trap %d err %d on cpu %d "
+      "eip 0x%x addr 0x%x--kill proc\n",
+      myproc()->pid, myproc()->name, tf->trapno,
+      tf->err, cpuid(), tf->eip, rcr2());
+      myproc()->killed = 1;
+    }
   }
 
   // Force process exit if it has been killed and is in user space.

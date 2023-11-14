@@ -221,15 +221,21 @@ growproc(int n)
   uint sz;
   struct proc *curproc = myproc();
 
+
+  // if allocating memory, we set new size (sz + n)
+  // pages will actually be allocated when we page fault
   sz = curproc->sz;
   if(n > 0){
-    if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
-      return -1;
+    sz = sz + n;
+    //if((sz = allocuvm(curproc->pgdir, sz, sz + n)) == 0)
+    //  return -1;
   } else if(n < 0){
     if((sz = deallocuvm(curproc->pgdir, sz, sz + n)) == 0)
       return -1;
   }
+  //cprintf("PID: %d, sz: %d, n: %d, alloc: %d\n", curproc->pid, curproc->sz, n, curproc->alloc);
   curproc->sz = sz;
+  //cprintf("PID: %d, sz: %d, n: %d, alloc: %d\n", curproc->pid, curproc->sz, n, curproc->alloc);
   switchuvm(curproc);
   return 0;
 }
